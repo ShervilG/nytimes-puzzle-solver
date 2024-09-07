@@ -1,6 +1,9 @@
 const WORDLE_URL = "https://www.nytimes.com/svc/wordle/v2";
 const CONNECTIONS_URL = "https://www.nytimes.com/svc/connections/v2";
 const MINI_CROSSWORD_URL = "https://www.nytimes.com/svc/crosswords/v6/puzzle/mini";
+const CACHE_REFRESH_SEC = 60;
+const CACHE_TTL_SEC = 60 * 5;
+const CACHE_PREFIX = 'NYTIMES-PUZZLE-EXT';
 
 const today = new Date();
 const year = today.getFullYear();
@@ -8,16 +11,27 @@ const month = String(today.getMonth() + 1).padStart(2, '0');
 const day = String(today.getDate()).padStart(2, '0');
 const formattedDate = `${year}-${month}-${day}`;
 
+const cache = new CustomCache(CACHE_PREFIX, CACHE_REFRESH_SEC, CACHE_TTL_SEC);
+
 function createUrl(baseUrl, date) {
     if (date == null) {
-        return `${baseUrl}.json`;    
+        return `${baseUrl}.json`;
     }
 
     return `${baseUrl}/${date}.json`;
 }
 
 function makeJsonFetchRequest(url, callback) {
-    fetch(url, {method: 'GET'}).then(data => data.json().then(d => callback(d)));
+    const cacheKey = `${CACHE_PREFIX}-${url}`;
+    const d = cache.get(cacheKey);
+    if (d == null) {
+        fetch(url, { method: 'GET' }).then(data => data.json().then(d => {
+            callback(d);
+            cache.set(cacheKey, d);
+        }));
+    } else {
+        callback(d);
+    }
 }
 
 function findWordleSolution() {
@@ -55,13 +69,13 @@ function findMiniCrossWordSolution() {
         const body = d.body[0];
         const { height, width } = body.dimensions;
         const cells = body.cells;
-        
+
         const ps = [];
-        for (let i = 0;i < height;i++) {
+        for (let i = 0; i < height; i++) {
             const p = document.createElement("p");
             let content = '';
 
-            for (let j = 0;j < width;j++) {
+            for (let j = 0; j < width; j++) {
                 const index = i * width + j;
 
                 content += (cells[index].answer ?? '_');
@@ -70,7 +84,7 @@ function findMiniCrossWordSolution() {
             p.innerHTML = content;
             ps.push(p);
         }
-        
+
         const el = document.getElementsByClassName("sol")[0];
         el.innerHTML = '';
         ps.forEach(p => {
