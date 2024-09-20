@@ -1,17 +1,12 @@
 const WORDLE_URL = "https://www.nytimes.com/svc/wordle/v2";
 const CONNECTIONS_URL = "https://www.nytimes.com/svc/connections/v2";
 const MINI_CROSSWORD_URL = "https://www.nytimes.com/svc/crosswords/v6/puzzle/mini";
-const CACHE_REFRESH_SEC = 60;
-const CACHE_TTL_SEC = 60 * 5;
-const CACHE_PREFIX = 'NYTIMES-PUZZLE-EXT';
 
 const today = new Date();
 const year = today.getFullYear();
 const month = String(today.getMonth() + 1).padStart(2, '0');
 const day = String(today.getDate()).padStart(2, '0');
 const formattedDate = `${year}-${month}-${day}`;
-
-const cache = new CustomCache(CACHE_PREFIX, CACHE_REFRESH_SEC, CACHE_TTL_SEC);
 
 function createUrl(baseUrl, date) {
     if (date == null) {
@@ -22,16 +17,9 @@ function createUrl(baseUrl, date) {
 }
 
 function makeJsonFetchRequest(url, callback) {
-    const cacheKey = `${CACHE_PREFIX}-${url}`;
-    const d = cache.get(cacheKey);
-    if (d == null) {
-        fetch(url, { method: 'GET' }).then(data => data.json().then(d => {
-            callback(d);
-            cache.set(cacheKey, d);
-        }));
-    } else {
+    fetch(url, { method: 'GET' }).then(data => data.json().then(d => {
         callback(d);
-    }
+    }));
 }
 
 function findWordleSolution() {

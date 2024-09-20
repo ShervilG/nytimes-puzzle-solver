@@ -5,7 +5,7 @@ A fun little extension that fetches the solution for present day's New York Time
 - Mini Crossword
 - Connections
 
-Fetches solutions from New York Times endpoints and caches them in localStorage for a few minutes.
+Fetches solutions from New York Times endpoints.
 
 ## Installing
 Clone the repo and follow this instructions to load the extension: [here](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)
